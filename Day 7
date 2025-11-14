@@ -1,0 +1,132 @@
+import streamlit as st
+import pandas as pd
+
+st.title("CGPA Calculator")
+
+st.latex(st.latex(r"\text{CGPA} = \frac{\sum (\text{Credits} \times \text{Grade Points})}{\sum (\text{Credits})}")
+
+
+# --- GRADE TABLE ---
+grade_table = {
+    "Marks": ["91-100", "81-90", "71-80", "61-70", "51-60", "41-50", "0-40"],
+    "Grade": ["S", "A", "B", "C", "D", "E", "F"],
+    "Points": [10, 9, 8, 7, 6, 5, 0]
+}
+
+df = pd.DataFrame(grade_table)
+st.write("### Grade Table:")
+st.table(df)
+
+# --- SIDEBAR OPTION ---
+mode = st.sidebar.radio(
+    "Choose Mode:",
+    ["Full CGPA Calculator (All Semesters)",
+     "Add Current Semester to Previous CGPA"]
+)
+
+# --- FULL CGPA CALCULATOR ---
+if mode == "Full CGPA Calculator (All Semesters)":
+    st.header("Enter Grades and Credits for All Semesters")
+
+    num_semesters = st.number_input(
+        "Enter total number of semesters", min_value=1, step=1
+    )
+
+    semesters = []
+    grade_points = []
+    credits = []
+
+    for sem in range(1, int(num_semesters) + 1):
+        st.subheader(f"Semester {sem}")
+        num_subjects = st.number_input(
+            f"Number of subjects in Semester {sem}",
+            min_value=1, step=1, key=f"subs_{sem}"
+        )
+
+        sem_grade_points = []
+        sem_credits = []
+
+        for i in range(1, int(num_subjects) + 1):
+            col1, col2 = st.columns(2)
+            with col1:
+                g = st.number_input(
+                    f"Grade Points for Subject {i} (Sem {sem})",
+                    min_value=0, max_value=10, step=1, key=f"gp_{sem}_{i}"
+                )
+            with col2:
+                c = st.number_input(
+                    f"Credits for Subject {i} (Sem {sem})",
+                    min_value=0, step=1, key=f"cr_{sem}_{i}"
+                )
+
+            sem_grade_points.append(g)
+            sem_credits.append(c)
+
+        valid_pairs = [
+            (g, c) for g, c in zip(sem_grade_points, sem_credits) if c > 0
+        ]
+
+        if valid_pairs:
+            sem_sgpa = sum(g * c for g, c in valid_pairs) / sum(c for _, c in valid_pairs)
+        else:
+            sem_sgpa = 0
+
+        st.success(f"SGPA for Semester {sem}: {sem_sgpa:.2f}")
+
+        semesters.append(f"Semester {sem}")
+        grade_points.extend(sem_grade_points)
+        credits.extend(sem_credits)
+
+    if st.button("Calculate Overall CGPA"):
+        total_credits = sum(credits)
+        if total_credits > 0:
+            cgpa = sum(g * c for g, c in zip(grade_points, credits)) / total_credits
+            st.subheader(f"🎯 Your Overall CGPA is: {cgpa:.2f}")
+        else:
+            st.warning("Please enter valid credits for all subjects!")
+
+# --- ADD CURRENT SEMESTER MODE ---
+else:
+    st.header("Add Current Semester to Previous CGPA")
+
+    prev_cgpa = st.number_input(
+        "Enter your Previous CGPA", min_value=0.0, max_value=10.0, step=0.01
+    )
+    prev_credits = st.number_input(
+        "Enter Total Credits till Previous Semester", min_value=0, step=1
+    )
+
+    st.subheader("Enter Current Semester Details")
+
+    num_subjects = st.number_input(
+        "Number of subjects in Current Semester", min_value=1, step=1
+    )
+
+    grade_points = []
+    credits = []
+
+    for i in range(1, int(num_subjects) + 1):
+        col1, col2 = st.columns(2)
+        with col1:
+            g = st.number_input(
+                f"Grade Points for Subject {i}",
+                min_value=0, max_value=10, step=1, key=f"gp_{i}"
+            )
+        with col2:
+            c = st.number_input(
+                f"Credits for Subject {i}",
+                min_value=0, step=1, key=f"cr_{i}"
+            )
+
+        grade_points.append(g)
+        credits.append(c)
+
+    if st.button("Calculate Updated CGPA"):
+        current_total_credits = sum(credits)
+        if current_total_credits > 0:
+            current_sgpa = sum(g * c for g, c in zip(grade_points, credits)) / current_total_credits
+            total_credits = prev_credits + current_total_credits
+            cgpa = ((prev_cgpa * prev_credits) + (current_sgpa * current_total_credits)) / total_credits
+            st.subheader(f"🎯 Your Updated CGPA is: {cgpa:.2f}")
+        else:
+            st.warning("Please enter valid credits for current semester!")
