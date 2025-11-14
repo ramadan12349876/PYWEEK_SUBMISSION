@@ -1,0 +1,20 @@
+import pandas as pd
+df = pd.read_csv('C:/Users/fattams/python/pandas/day3/ipl-matches.csv')
+# Display the first 5 rows.
+print(df.head())
+# Show the number of rows and columns
+print(df.shape)
+# List all unique teams. 
+print(df['Team1'].unique())
+# How many matches were played per season?
+print(df['Season'].value_counts())
+# Which team has won the most matches? 
+print(df['Winning Team'].value_counts())
+# Show matches where Mumbai Indians were the winner.
+print(df[df['Winning Team'] == 'Mumbai Indians'])
+# Show all matches that went to a super over.
+print(df[df['SuperOver'] == 'Y'])
+# Show matches held at "Eden Gardens" 
+print(df[df['City'] == 'Kolkata'])
+# Calculates the percentage of matches where the TossWinner is also the Winning Team.
+print(((df[df['TossWinner'] == df['Winning Team']]).shape[0] / df.shape[0]) * 100)
